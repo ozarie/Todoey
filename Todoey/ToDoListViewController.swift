@@ -12,11 +12,20 @@ class ToDoListViewController: UITableViewController {
 
     var itemArray : [String] = ["Shoshana", "Damary", "Ofra Haza"]
     
+    //setting the reference to UserDeafaults
+    let defaults = UserDefaults.standard
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if let items = defaults.array(forKey: "ToDoListArray") as? [String] {
+            itemArray = items
+        }
     }
     
-    //MARK: Tableview Datasource Method
+    
+    //MARK: - Tableview Datasource Method
+    
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return itemArray.count
     }
@@ -27,7 +36,9 @@ class ToDoListViewController: UITableViewController {
         return cell
     }
     
-    //MARK: Tableview Delegate Methods
+    
+    //MARK: - Tableview Delegate Methods
+    
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         print("Row number: \(indexPath.row), Text is: \(itemArray[indexPath.row])")
         
@@ -38,14 +49,13 @@ class ToDoListViewController: UITableViewController {
             tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
         }
 
-        
-        
         //change appearance of selected row
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
     
-    //MARK: Add new items
+    //MARK: - Add new items
+    
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         
         //var to save text from popup
@@ -65,6 +75,9 @@ class ToDoListViewController: UITableViewController {
             //what will happen when the user clicks add
             self.itemArray.append(textField.text!)
             print(self.itemArray)
+            
+            //saving to UserDefaults
+            self.defaults.set(self.itemArray, forKey: "ToDoListArray")
             
             //reload the table view with our new items
             self.tableView.reloadData()
