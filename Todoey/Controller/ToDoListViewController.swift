@@ -12,27 +12,13 @@ class ToDoListViewController: UITableViewController {
 
     var itemArray : [Item] = [Item]()
     
-    //setting the reference to UserDeafaults
-    let defaults = UserDefaults.standard
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Item.plist")
     
     override func viewDidLoad() {
         super.viewDidLoad()
+       
+        loadItems()
         
-        let newItem : Item = Item()
-        newItem.title = "Oz"
-        itemArray.append(newItem)
-        
-        let newItem2 : Item = Item()
-        newItem2.title = "Amit"
-        itemArray.append(newItem2)
-        
-        let newItem3 : Item = Item()
-        newItem3.title = "Aviv"
-        itemArray.append(newItem3)
-        
-        if let items = defaults.array(forKey: "ToDoListArray") as? [Item] {
-            itemArray = items
-        }
     }
     
     
@@ -73,6 +59,8 @@ class ToDoListViewController: UITableViewController {
         //short way - will make the done property opposite
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         
+        saveItems()
+        
 //        //long way
 //        if itemArray[indexPath.row].done == false {
 //            itemArray[indexPath.row].done = true
@@ -110,8 +98,7 @@ class ToDoListViewController: UITableViewController {
             newItem.title = textField.text!
             self.itemArray.append(newItem)
             
-            //saving to UserDefaults
-            self.defaults.set(self.itemArray, forKey: "ToDoListArray")
+            self.saveItems()
             
             //reload the table view with our new items
             self.tableView.reloadData()
@@ -126,6 +113,42 @@ class ToDoListViewController: UITableViewController {
     }
     
     
+    //MARK: - Model manipulation Methods
+    
+    func saveItems() {
+        //create an encoder
+        let encoder : PropertyListEncoder = PropertyListEncoder()
+        do {
+            //encodding the data to a dictionary
+            let data = try encoder.encode(itemArray)
+            //writing our data custom file
+            try data.write(to: dataFilePath!)
+        } catch {
+            print("Error saving item array: \(error)")
+        }
+    }
+    
+    func loadItems(){
+        do {
+            let data = try Data(contentsOf: dataFilePath!)
+            let decoder : PropertyListDecoder = PropertyListDecoder()
+            
+            //this is the method that decodes our data. we have to specify what is the data type of the decoded value. our data is array of Item - [Item]. we have to add the .self so it will know that we are reffering to our Item type and not an object.
+            itemArray = try decoder.decode([Item].self, from: data)
+        } catch {
+            print("Error decoding item array: \(error)")
+        }
+        
+        
+//        if let dataTwo = try? Data(contentsOf: dataFilePath!) {
+//            let decoderTwo : PropertyListDecoder = PropertyListDecoder()
+//            do {
+//                itemArray = try decoderTwo.decode([Item].self, from: dataTwo)
+//            } catch {
+//                print("Error decoding item array: \(error)")
+//            }
+//        }
+    }
     
     
     
