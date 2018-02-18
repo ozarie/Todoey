@@ -65,14 +65,6 @@ class ToDoListViewController: UITableViewController {
         
         saveItems()
         
-//        //long way
-//        if itemArray[indexPath.row].done == false {
-//            itemArray[indexPath.row].done = true
-//        } else {
-//            itemArray[indexPath.row].done = false
-//        }
-        
-        
 //        //how to delete items from the context (DB) and then from the item array, we will do it later.
 //        context.delete(itemArray[indexPath.row])
 //        itemArray.remove(at: indexPath.row)
@@ -135,38 +127,51 @@ class ToDoListViewController: UITableViewController {
         }
     }
     
-    
-    func loadItems(){
-        //you have to specify the data type of the request and the entity type
-        let request : NSFetchRequest<Item> = Item.fetchRequest()
+    //החלק שאחרי סימן השוויון אומר שאם לא העברתי פרמטר אז הוא טוען את כל הנתונים ומביא אותם. כלומר, אני נותן לו ערך דיפולטיבי.
+    func loadItems(with request : NSFetchRequest<Item> = Item.fetchRequest()){
+        
         do {
             itemArray = try context.fetch(request)
         } catch {
             print("Error fetching data from context: \(error)")
         }
+        tableView.reloadData()
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-   
 }
+    
+//MARK: - SearchBar Delegate Methods
+
+extension ToDoListViewController : UISearchBarDelegate {
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        
+        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        
+        //sortDescriptors - plural - it wnts an array of sortDescriptors but we only have one so we have only one so we wrap it in an array
+        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+        
+        loadItems(with: request)
+    }
+}
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
