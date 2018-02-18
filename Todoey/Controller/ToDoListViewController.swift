@@ -11,6 +11,12 @@ import CoreData
 
 class ToDoListViewController: UITableViewController {
     
+    var selectedCategory : Category? {
+        didSet{
+            loadItems()
+        }
+    }
+    
     //create the context for AppDelegete singleton
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
 
@@ -20,8 +26,6 @@ class ToDoListViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-       
-        loadItems()
         
     }
     
@@ -101,14 +105,11 @@ class ToDoListViewController: UITableViewController {
             let newItem : Item = Item(context: self.context)
             newItem.title = textField.text!
             newItem.done = false
+            newItem.parentCategory = self.selectedCategory
             self.itemArray.append(newItem)
             
             self.saveItems()
-            
-            //reload the table view with our new items
-            self.tableView.reloadData()
         }
-        
         
         alert.addAction(action)
         
@@ -125,10 +126,19 @@ class ToDoListViewController: UITableViewController {
         } catch {
             print("Error saving item array: \(error)")
         }
+        tableView.reloadData()
     }
     
     //החלק שאחרי סימן השוויון אומר שאם לא העברתי פרמטר אז הוא טוען את כל הנתונים ומביא אותם. כלומר, אני נותן לו ערך דיפולטיבי.
-    func loadItems(with request : NSFetchRequest<Item> = Item.fetchRequest()){
+    func loadItems(with request : NSFetchRequest<Item> = Item.fetchRequest(), itemPredicate : NSPredicate? = nil){
+        
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+        
+        if let additionalPredicate = itemPredicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate,additionalPredicate])
+        } else {
+            request.predicate = categoryPredicate
+        }
         
         do {
             itemArray = try context.fetch(request)
@@ -146,13 +156,13 @@ extension ToDoListViewController : UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         if searchBar.text?.count != 0 {
             let request : NSFetchRequest<Item> = Item.fetchRequest()
-
-            request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+            
+            let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
 
             //sortDescriptors - plural - it wants an array of sortDescriptors but we only have one so we have only one so we wrap it in an array
             request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
 
-            loadItems(with: request)
+            loadItems(with: request, itemPredicate : predicate)
         }
     }
     
