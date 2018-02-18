@@ -7,8 +7,12 @@
 //
 
 import UIKit
+import CoreData
 
 class ToDoListViewController: UITableViewController {
+    
+    //create the context for AppDelegete singleton
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
 
     var itemArray : [Item] = [Item]()
     
@@ -18,7 +22,6 @@ class ToDoListViewController: UITableViewController {
         super.viewDidLoad()
        
         loadItems()
-        
         
     }
     
@@ -68,7 +71,14 @@ class ToDoListViewController: UITableViewController {
 //        } else {
 //            itemArray[indexPath.row].done = false
 //        }
-
+        
+        
+//        //how to delete items from the context (DB) and then from the item array, we will do it later.
+//        context.delete(itemArray[indexPath.row])
+//        itemArray.remove(at: indexPath.row)
+        
+        saveItems()
+        
         tableView.reloadData()
         
         //change appearance of selected row
@@ -95,8 +105,10 @@ class ToDoListViewController: UITableViewController {
         //create action to alert
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
             //what will happen when the user clicks add
-            let newItem : Item = Item()
+            
+            let newItem : Item = Item(context: self.context)
             newItem.title = textField.text!
+            newItem.done = false
             self.itemArray.append(newItem)
             
             self.saveItems()
@@ -104,7 +116,6 @@ class ToDoListViewController: UITableViewController {
             //reload the table view with our new items
             self.tableView.reloadData()
         }
-        
         
         
         alert.addAction(action)
@@ -117,38 +128,22 @@ class ToDoListViewController: UITableViewController {
     //MARK: - Model manipulation Methods
     
     func saveItems() {
-        //create an encoder
-        let encoder : PropertyListEncoder = PropertyListEncoder()
         do {
-            //encodding the data to a dictionary
-            let data = try encoder.encode(itemArray)
-            //writing our data custom file
-            try data.write(to: dataFilePath!)
+            try context.save()
         } catch {
             print("Error saving item array: \(error)")
         }
     }
     
+    
     func loadItems(){
+        //you have to specify the data type of the request and the entity type
+        let request : NSFetchRequest<Item> = Item.fetchRequest()
         do {
-            let data = try Data(contentsOf: dataFilePath!)
-            let decoder : PropertyListDecoder = PropertyListDecoder()
-            
-            //this is the method that decodes our data. we have to specify what is the data type of the decoded value. our data is array of Item - [Item]. we have to add the .self so it will know that we are reffering to our Item type and not an object.
-            itemArray = try decoder.decode([Item].self, from: data)
+            itemArray = try context.fetch(request)
         } catch {
-            print("Error decoding item array: \(error)")
+            print("Error fetching data from context: \(error)")
         }
-        
-        
-//        if let dataTwo = try? Data(contentsOf: dataFilePath!) {
-//            let decoderTwo : PropertyListDecoder = PropertyListDecoder()
-//            do {
-//                itemArray = try decoderTwo.decode([Item].self, from: dataTwo)
-//            } catch {
-//                print("Error decoding item array: \(error)")
-//            }
-//        }
     }
     
     
