@@ -144,15 +144,40 @@ class ToDoListViewController: UITableViewController {
 extension ToDoListViewController : UISearchBarDelegate {
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        let request : NSFetchRequest<Item> = Item.fetchRequest()
-        
-        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
-        
-        //sortDescriptors - plural - it wnts an array of sortDescriptors but we only have one so we have only one so we wrap it in an array
-        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
-        
-        loadItems(with: request)
+        if searchBar.text?.count != 0 {
+            let request : NSFetchRequest<Item> = Item.fetchRequest()
+
+            request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+
+            //sortDescriptors - plural - it wants an array of sortDescriptors but we only have one so we have only one so we wrap it in an array
+            request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+
+            loadItems(with: request)
+        }
     }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchText.isEmpty {
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+            loadItems()
+        }
+        
+        
+//        //you can do this here and than the array will be updated all the time
+//        if searchBar.text?.count != 0 {
+//            let request : NSFetchRequest<Item> = Item.fetchRequest()
+//
+//            request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+//
+//            //sortDescriptors - plural - it wants an array of sortDescriptors but we only have one so we have only one so we wrap it in an array
+//            request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+//
+//            loadItems(with: request)
+//        }
+    }
+    
 }
    
 
