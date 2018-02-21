@@ -9,7 +9,7 @@
 import UIKit
 import RealmSwift
 
-class CategoryViewController: UITableViewController {
+class CategoryViewController: SwipeTableViewController {
     
     let realm : Realm = try! Realm()
     
@@ -39,9 +39,11 @@ class CategoryViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         cell.textLabel?.text = categories?[indexPath.row].name ?? "No Categories Added Yet"
+        
+        cell.accessoryType = .disclosureIndicator
         
         return cell
     }
@@ -66,6 +68,19 @@ class CategoryViewController: UITableViewController {
         tableView.reloadData()
     }
     
+    override func updateModel(at indexPath: IndexPath) {
+        //if you want to do the func work of the parent 
+        //super.updateModel(at: indexPath)
+        if let categoryForDeletion = categories?[indexPath.row] {
+            do {
+                try realm.write {
+                    realm.delete(categoryForDeletion)
+                }
+            } catch {
+                print("Error Deleting Category: \(error)")
+            }
+        }
+    }
     
     //MARK: - Add New Categories
 
@@ -107,6 +122,7 @@ class CategoryViewController: UITableViewController {
         }
     }
 }
+
 
 
 
