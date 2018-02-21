@@ -73,8 +73,6 @@ class ToDoListViewController: UITableViewController {
 //        context.delete(itemArray[indexPath.row])
 //        itemArray.remove(at: indexPath.row)
         
-        saveItems()
-        
         tableView.reloadData()
         
         //change appearance of selected row
@@ -175,7 +173,7 @@ extension ToDoListViewController : UISearchBarDelegate {
         }
         
         
-//        //you can do this here and than the array will be updated all the time
+//        //you can do this here and than the array will be updated all the time so U see it automatically.
 //        if searchBar.text?.count != 0 {
 //            let request : NSFetchRequest<Item> = Item.fetchRequest()
 //
