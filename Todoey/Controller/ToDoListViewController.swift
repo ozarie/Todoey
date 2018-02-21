@@ -7,9 +7,13 @@
 //
 
 import UIKit
-import CoreData
+import RealmSwift
 
 class ToDoListViewController: UITableViewController {
+    
+    let realm : Realm = try! Realm()
+    
+    var toDoItems : Results<Item>?
     
     var selectedCategory : Category? {
         didSet{
@@ -17,43 +21,27 @@ class ToDoListViewController: UITableViewController {
         }
     }
     
-    //create the context for AppDelegete singleton
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
-
-    var itemArray : [Item] = [Item]()
-    
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Item.plist")
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         
     }
     
-    
     //MARK: - Tableview Datasource Method
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return itemArray.count
+        return toDoItems?.count ?? 1
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "toDoItemCell", for: indexPath)
         
-        let item : Item = itemArray[indexPath.row]
+        let item : Item = toDoItems[indexPath.row]
         
         //because the itemArray is now an Item and not a String
         cell.textLabel?.text = item.title
         
         //Ternary Operator - short way
         cell.accessoryType = item.done ? .checkmark : .none
-        
-        
-//        //long way
-//        if itemArray[indexPath.row].done == true {
-//            cell.accessoryType = .checkmark
-//        } else {
-//            cell.accessoryType = .none
-//        }
         
         return cell
     }
@@ -62,10 +50,10 @@ class ToDoListViewController: UITableViewController {
     //MARK: - Tableview Delegate Methods
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        print("Row number: \(indexPath.row), Text is: \(itemArray[indexPath.row])")
+        print("Row number: \(indexPath.row), Text is: \(toDoItems[indexPath.row])")
         
         //short way - will make the done property opposite
-        itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+        toDoItems[indexPath.row].done = !toDoItems[indexPath.row].done
         
         saveItems()
         
@@ -104,7 +92,7 @@ class ToDoListViewController: UITableViewController {
             newItem.title = textField.text!
             newItem.done = false
             newItem.parentCategory = self.selectedCategory
-            self.itemArray.append(newItem)
+            self.toDoItems.append(newItem)
             
             self.saveItems()
         }
@@ -127,22 +115,10 @@ class ToDoListViewController: UITableViewController {
         tableView.reloadData()
     }
     
-    //החלק שאחרי סימן השוויון אומר שאם לא העברתי פרמטר אז הוא טוען את כל הנתונים ומביא אותם. כלומר, אני נותן לו ערך דיפולטיבי.
-    func loadItems(with request : NSFetchRequest<Item> = Item.fetchRequest(), itemPredicate : NSPredicate? = nil){
+    
+    func loadItems(){
+        toDoItems = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
         
-        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
-        
-        if let additionalPredicate = itemPredicate {
-            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate,additionalPredicate])
-        } else {
-            request.predicate = categoryPredicate
-        }
-        
-        do {
-            itemArray = try context.fetch(request)
-        } catch {
-            print("Error fetching data from context: \(error)")
-        }
         tableView.reloadData()
     }
 }
