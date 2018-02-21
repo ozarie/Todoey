@@ -33,16 +33,16 @@ class ToDoListViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        
         let cell = tableView.dequeueReusableCell(withIdentifier: "toDoItemCell", for: indexPath)
         
-        let item : Item = toDoItems[indexPath.row]
-        
-        //because the itemArray is now an Item and not a String
-        cell.textLabel?.text = item.title
-        
-        //Ternary Operator - short way
-        cell.accessoryType = item.done ? .checkmark : .none
-        
+        if let item : Item = toDoItems?[indexPath.row] {
+            cell.textLabel?.text = item.title
+            cell.accessoryType = item.done ? .checkmark : .none
+        } else {
+            cell.textLabel?.text = "No Items Added"
+        }
+      
         return cell
     }
     
@@ -50,17 +50,17 @@ class ToDoListViewController: UITableViewController {
     //MARK: - Tableview Delegate Methods
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        print("Row number: \(indexPath.row), Text is: \(toDoItems[indexPath.row])")
         
-        //short way - will make the done property opposite
-        toDoItems[indexPath.row].done = !toDoItems[indexPath.row].done
-        
-        saveItems()
-        
-//        //how to delete items from the context (DB) and then from the item array, we will do it later.
-//        context.delete(itemArray[indexPath.row])
-//        itemArray.remove(at: indexPath.row)
-        
+        if let item = toDoItems?[indexPath.row] {
+            do {
+                try realm.write {
+                    item.done = !item.done
+                }
+            } catch {
+                print("Error updating item: \(error)")
+            }
+        }
+       
         tableView.reloadData()
         
         //change appearance of selected row
@@ -88,13 +88,18 @@ class ToDoListViewController: UITableViewController {
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
             //what will happen when the user clicks add
             
-            let newItem : Item = Item(context: self.context)
-            newItem.title = textField.text!
-            newItem.done = false
-            newItem.parentCategory = self.selectedCategory
-            self.toDoItems.append(newItem)
-            
-            self.saveItems()
+            if let currentCategory = self.selectedCategory {
+                do {
+                    try self.realm.write {
+                        let newItem : Item = Item()
+                        newItem.title = textField.text!
+                        currentCategory.items.append(newItem)
+                    }
+                } catch {
+                    print("Error saving item: \(error)")
+                }
+            }
+            self.tableView.reloadData()
         }
         
         alert.addAction(action)
@@ -105,16 +110,6 @@ class ToDoListViewController: UITableViewController {
     
     
     //MARK: - Model manipulation Methods
-    
-    func saveItems() {
-        do {
-            try context.save()
-        } catch {
-            print("Error saving item array: \(error)")
-        }
-        tableView.reloadData()
-    }
-    
     
     func loadItems(){
         toDoItems = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
@@ -129,14 +124,8 @@ extension ToDoListViewController : UISearchBarDelegate {
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         if searchBar.text?.count != 0 {
-            let request : NSFetchRequest<Item> = Item.fetchRequest()
-            
-            let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
-
-            //sortDescriptors - plural - it wants an array of sortDescriptors but we only have one so we have only one so we wrap it in an array
-            request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
-
-            loadItems(with: request, itemPredicate : predicate)
+            toDoItems = toDoItems?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "title", ascending: true)
+            tableView.reloadData()
         }
     }
     
@@ -147,19 +136,6 @@ extension ToDoListViewController : UISearchBarDelegate {
             }
             loadItems()
         }
-        
-        
-//        //you can do this here and than the array will be updated all the time so U see it automatically.
-//        if searchBar.text?.count != 0 {
-//            let request : NSFetchRequest<Item> = Item.fetchRequest()
-//
-//            request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
-//
-//            //sortDescriptors - plural - it wants an array of sortDescriptors but we only have one so we have only one so we wrap it in an array
-//            request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
-//
-//            loadItems(with: request)
-//        }
     }
     
 }
