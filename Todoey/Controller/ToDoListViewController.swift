@@ -47,6 +47,16 @@ class ToDoListViewController: SwipeTableViewController {
     }
     
     
+    override func viewWillDisappear(_ animated: Bool) {
+        if let originalColor = UIColor(hexString: "0080FF") {
+            navigationController?.navigationBar.barTintColor = originalColor
+            navigationController?.navigationBar.tintColor = FlatWhite()
+            navigationController?.navigationBar.largeTitleTextAttributes = [NSAttributedStringKey.foregroundColor : FlatWhite()]
+            navigationController?.navigationBar.titleTextAttributes = [NSAttributedStringKey.foregroundColor : FlatWhite()]
+        }
+    }
+    
+    
     //MARK: - Tableview Datasource Method
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
